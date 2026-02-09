@@ -18,10 +18,12 @@ nmap -p 80 "$TARGET_IP" -oG - | grep -q "80/open" && {
   nikto -h "http://$TARGET_IP" -no404 -o nikto.txt >/dev/null 2>&1 || true
 }
 
-cp recon.nmap ~/
-[[ -f whatweb.txt ]] && cp whatweb.txt ~/
-[[ -f gobuster.txt ]] && cp gobuster.txt ~/
-[[ -f nikto.txt ]] && cp nikto.txt ~/
+cp recon.nmap ~/"recon-${TARGET_IP}.nmap" 2>/dev/null || true
+
+# Shred empty/failed files before copy
+[[ ! -s whatweb.txt ]] && rm whatweb.txt || cp whatweb.txt ~/
+[[ ! -s gobuster.txt ]] && rm gobuster.txt || cp gobuster.txt ~/
+[[ ! -s nikto.txt ]] && rm nikto.txt || cp nikto.txt ~/
 
 # OPSEC
 > ~/.bash_history  # Truncate
