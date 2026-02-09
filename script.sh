@@ -9,7 +9,7 @@ wget -q -O "$WORDLIST" https://raw.githubusercontent.com/danielmiessler/SecLists
 cd "$TMPDIR"
 echo "Recon $TARGET_IP..."
 
-sudo nmap -sS -sV -T4 --top-ports 100 --max-retries 1 --host-timeout 10s "$TARGET_IP" -oN recon.nmap
+sudo nmap -sT -sV -T4 --top-ports 100 --max-retries 1 --host-timeout 10s "$TARGET_IP" -oN recon.nmap
 
 # Web only if 80 open
 nmap -p 80 "$TARGET_IP" -oG - | grep -q "80/open" && {
