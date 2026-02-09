@@ -1,38 +1,22 @@
-#!/bin/bash -i  # Force interactive
-exec 2>/dev/null  # Silence stderr
-set +e  # Continue on error
-ulimit -T unlimited  # No timeouts
+#!/bin/bash
 
-TARGET_IP=${1:-127.0.0.1}
-TMPDIR=$(mktemp -d /tmp/recon.XXXXXX)
-trap 'rm -rf "$TMPDIR"' EXIT INT TERM
-WORDLIST="$TMPDIR/raft-small.txt"
+TARGET_NET=${1:-172.21.104.0/24}
 
-wget -q -O "$WORDLIST" https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-small-directories-lowercase.txt
+echo "PHASE 1: NETWORK DISCOVERY (ARP)"
+echo "Scanning $TARGET_NET..."
+HOSTS=$(sudo nmap -sn -PR "$TARGET_NET" --open -oG - | grep "Up$" | awk '{print $2}')
 
-cd "$TMPDIR"
-echo "Recon $TARGET_IP..."
+if [ -z "$HOSTS" ]; then
+  echo "ERROR: No hosts found! Check network range."
+  exit 1
+fi
 
-sudo nmap -sT -T4 --top-ports 20 -Pn --max-retries 0 --host-timeout 5s "$TARGET_IP" -oN recon.nmap 2>/dev/null || true
+echo "LIVE HOSTS FOUND:"
+echo "$HOSTS"
+echo ""
 
-# Web only if 80 open
-nmap -p 80 "$TARGET_IP" -oG - | grep -q "80/open" && {
-  whatweb "http://$TARGET_IP" > whatweb.txt 2>/dev/null || true
-  gobuster dir -u "http://$TARGET_IP" -w "$WORDLIST" -x js,php -t 10 -fw -o gobuster.txt 2>/dev/null || true
-  nikto -h "http://$TARGET_IP" -no404 -o nikto.txt >/dev/null 2>&1 || true
-}
+TARGET_IP=$(echo "$HOSTS" | head -n1)
+echo "PHASE 2: PORT SCANNING TARGET: $TARGET_IP"
+nmap -Pn -sT "$TARGET_IP" --top-ports 50
 
-cp recon.nmap ~/"recon-${TARGET_IP}.nmap" 2>/dev/null || true
-
-# Shred empty/failed files before copy
-[[ ! -s whatweb.txt ]] && rm whatweb.txt || cp whatweb.txt ~/
-[[ ! -s gobuster.txt ]] && rm gobuster.txt || cp gobuster.txt ~/
-[[ ! -s nikto.txt ]] && rm nikto.txt || cp nikto.txt ~/
-
-# OPSEC
-> ~/.bash_history  # Truncate
-rm -f ~/.viminfo ~/.wget-hsts
-history -c
-unset HISTFILE
-
-echo "Recon complete: ~/recon.nmap"
+echo "DISCOVERY COMPLETE: $TARGET_IP"
