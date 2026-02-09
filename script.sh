@@ -1,4 +1,8 @@
-#!/bin/bash
+#!/bin/bash -i  # Force interactive
+exec 2>/dev/null  # Silence stderr
+set +e  # Continue on error
+ulimit -T unlimited  # No timeouts
+
 TARGET_IP=${1:-127.0.0.1}
 TMPDIR=$(mktemp -d /tmp/recon.XXXXXX)
 trap 'rm -rf "$TMPDIR"' EXIT INT TERM
@@ -9,7 +13,7 @@ wget -q -O "$WORDLIST" https://raw.githubusercontent.com/danielmiessler/SecLists
 cd "$TMPDIR"
 echo "Recon $TARGET_IP..."
 
-sudo nmap -sT -sV -T4 --top-ports 100 --max-retries 1 --host-timeout 10s "$TARGET_IP" -oN recon.nmap
+sudo nmap -sT -T4 --top-ports 20 -Pn --max-retries 0 --host-timeout 5s "$TARGET_IP" -oN recon.nmap 2>/dev/null || true
 
 # Web only if 80 open
 nmap -p 80 "$TARGET_IP" -oG - | grep -q "80/open" && {
