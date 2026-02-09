@@ -10,7 +10,7 @@ wget -q -O "$WORDLIST" https://raw.githubusercontent.com/danielmiessler/SecLists
 cd "$TMPDIR"
 
 echo "Scanning $TARGET_IP (zero-trace)..."
-sudo nmap -sS -sV -T4 -p- "$TARGET_IP" -oN recon.nmap  # SYN, sudoers-enabled
+sudo nmap -sS -sV -T4 -p- --max-retries 1 --max-scan-delay 100ms --host-timeout 30s "$TARGET_IP" -oN recon.nmap
 whatweb "http://$TARGET_IP" > whatweb.txt
 gobuster dir -u "http://$TARGET_IP" -w "$WORDLIST" -x js,php,html -q -o gobuster.txt
 nikto -h "http://$TARGET_IP" -q -o nikto.txt  # -q silent
